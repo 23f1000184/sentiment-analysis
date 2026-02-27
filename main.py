@@ -14,6 +14,10 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 class CommentRequest(BaseModel):
     comment: str
 
+@app.get("/")
+def root():
+    return {"status": "API is running"}
+
 @app.post("/comment")
 async def analyze_comment(req: CommentRequest):
 
