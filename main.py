@@ -1,18 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from openai import OpenAI
-from dotenv import load_dotenv
-import os
-import json
-
-# Load API key
-load_dotenv()
 
 app = FastAPI()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class CommentRequest(BaseModel):
     comment: str
+
+# Simple rule-based keyword lists
+positive_words = ["good", "great", "amazing", "excellent", "love", "fast", "nice", "awesome"]
+negative_words = ["bad", "poor", "worst", "hate", "slow", "terrible", "awful"]
 
 @app.get("/")
 def root():
@@ -21,43 +17,13 @@ def root():
 @app.post("/comment")
 async def analyze_comment(req: CommentRequest):
 
-    if not req.comment.strip():
-        raise HTTPException(status_code=400, detail="Comment cannot be empty")
+    text = req.comment.lower()
 
-    try:
-        response = client.responses.create(
-            model="gpt-4.1-mini",
-            input=[
-                {
-                    "role": "system",
-                    "content": "You are a sentiment analysis API. Return only JSON."
-                },
-                {
-                    "role": "user",
-                    "content": f"""
-Analyze the sentiment of this comment.
+    if any(word in text for word in positive_words):
+        return {"sentiment": "positive", "rating": 4}
 
-Return strictly in JSON:
-{{"sentiment":"positive|negative|neutral","rating":1-5}}
+    elif any(word in text for word in negative_words):
+        return {"sentiment": "negative", "rating": 2}
 
-Comment: {req.comment}
-"""
-                }
-            ]
-        )
-
-        # Extract text output safely
-        text_output = response.output[0].content[0].text
-
-        # Convert to dict
-        result = json.loads(text_output)
-
-        return result
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    else:
+        return {"sentiment": "neutral", "rating": 3}
