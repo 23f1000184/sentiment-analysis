@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -6,7 +6,6 @@ app = FastAPI()
 class CommentRequest(BaseModel):
     comment: str
 
-# Simple rule-based keyword lists
 positive_words = ["good", "great", "amazing", "excellent", "love", "fast", "nice", "awesome"]
 negative_words = ["bad", "poor", "worst", "hate", "slow", "terrible", "awful"]
 
@@ -16,7 +15,6 @@ def root():
 
 @app.post("/comment")
 async def analyze_comment(req: CommentRequest):
-
     text = req.comment.lower()
 
     if any(word in text for word in positive_words):
